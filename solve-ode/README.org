@@ -2,33 +2,49 @@
 
 ** 目的
 
-常微分方程式を解くためのシンプルなソルバ
+常微分方程式を解くためのシンプルなソルバです。
+パッケージ作成の練習も兼ねて作成したもので、以下のソルバのみ用意しています。
+
+- Euler法
+- 古典的Runge-Kutta法（陽解法）
 
 ** インストール方法
 
-- ~stack.yaml~
-  #+begin_example
-  extra-deps:
-  - github: chupaaaaaaan/haskell-misc
-    commit: XXX
-    subdirs:
-      - solve-ode
-  #+end_example
+~stack.yaml~ の ~extra-deps~ に依存関係を追加してください。
+
+#+begin_example
+extra-deps:
+- git: https://github.com/chupaaaaaaan/haskell-misc.git
+  commit: 0f771f8b3788952387a2ac54b3251ade06bf67b3
+  subdirs:
+    - solve-ode
+#+end_example
 
 ** 使い方
 
-- stack script: Euler法でローレンツ方程式を解く場合
-  #+begin_src haskell
-    lorenz :: Double -> Double -> Double -> ODE
-    lorenz p r b = \vec -> let v = vec.x
-                               x' = -p * v!0 + p * v!1
-                               y' = -v!0 * v!2 + r * v!0 - v!1
-                               z' = v!0 * v!1 - b * v!2
-                           in mkVec vec.t [x', y', z']
+ローレンツ方程式をEuler法で解く場合のサンプルです。
 
-    trajectory :: [Vec]
-    trajectory = solveByEuler 0.01 (lorenz 10 28 (8.0/3.0)) tmax $ V 0 (vector [1,1,1])
+#+begin_src haskell
+#!/usr/bin/env stack
+-- stack --resolver lts-20.5 runghc --package solve-ode
 
-    main :: IO ()
-    main = mapM_ print trajectory
-  #+end_src
+{-# LANGUAGE OverloadedRecordDot #-}
+import SolveODE.Solver
+import SolveODE.Types
+
+lorenz :: ODE
+lorenz = \vec -> let v = vec.x
+                     x' = -p * v!0 + p * v!1
+                     y' = -v!0 * v!2 + r * v!0 - v!1
+                     z' = v!0 * v!1 - b * v!2
+                 in mkVec vec.t [x', y', z']
+    where p = 10.0
+          r = 28.0
+          b = 8.0/3.0
+
+trajectory :: [Vec]
+trajectory = solveByEuler 0.01 lorenz (\v -> v.t > 10) $ mkVec 0 [1,1,1]
+
+main :: IO ()
+main = mapM_ print trajectory
+#+end_src
